@@ -45,6 +45,37 @@ cd ~/script/Game
 setsid .venv/bin/python -u -m hykei_games > game.log 2>&1 < /dev/null &
 ```
 
+## Boot Autostart
+
+`hykei-84` runs the game at boot with:
+
+```text
+/etc/systemd/system/hykei-launchpad-games.service
+```
+
+The service waits 15 seconds before launching the app so USB/MIDI devices have
+time to appear, then starts:
+
+```bash
+/home/hykei/script/Game/.venv/bin/python -u -m hykei_games
+```
+
+Install or refresh the service from this repository:
+
+```bash
+sudo cp deploy/systemd/hykei-launchpad-games.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable hykei-launchpad-games.service
+sudo systemctl restart hykei-launchpad-games.service
+```
+
+Check it after boot:
+
+```bash
+systemctl status hykei-launchpad-games.service
+journalctl -u hykei-launchpad-games.service -b --no-pager
+```
+
 ## Verify
 
 ```bash
