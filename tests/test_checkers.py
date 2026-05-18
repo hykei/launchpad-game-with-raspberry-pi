@@ -2,7 +2,7 @@ import unittest
 
 from hykei_games.checkers import CheckersGame, InvalidMove, Move, Piece, Player, Pos
 from hykei_games.display import rotate_pos, status_lines, unrotate_pos
-from hykei_games.hardware import LaunchpadMidiAdapter
+from hykei_games.hardware import LaunchpadMidiAdapter, SafeStatus, create_i2c_lcd_status
 
 
 class CheckersGameTest(unittest.TestCase):
@@ -104,6 +104,39 @@ class CheckersGameTest(unittest.TestCase):
         self.assertEqual(LaunchpadMidiAdapter.color_to_rgb((0, 0, 0)), (0, 0, 0))
         self.assertEqual(LaunchpadMidiAdapter.color_to_rgb((255, 255, 255)), (63, 63, 63))
         self.assertEqual(LaunchpadMidiAdapter.color_to_rgb((170, 0, 0)), (42, 0, 0))
+
+    def test_safe_status_disables_lcd_after_write_error(self) -> None:
+        class BrokenStatus:
+            def __init__(self) -> None:
+                self.calls = 0
+
+            def write(self, line1: str, line2: str) -> None:
+                self.calls += 1
+                raise OSError("lcd disconnected")
+
+        broken = BrokenStatus()
+        status = SafeStatus(broken)
+
+        status.write("one", "two")
+        status.write("three", "four")
+
+        self.assertEqual(broken.calls, 1)
+
+    def test_create_i2c_lcd_status_falls_back_when_lcd_init_fails(self) -> None:
+        import hykei_games.hardware as hardware
+
+        original = hardware.I2cLcdAdapter
+
+        class BrokenLcd:
+            def __init__(self, address: int, columns: int, rows: int) -> None:
+                raise OSError("lcd disconnected")
+
+        try:
+            hardware.I2cLcdAdapter = BrokenLcd  # type: ignore[assignment]
+            status = create_i2c_lcd_status()
+            status.write("game", "status")
+        finally:
+            hardware.I2cLcdAdapter = original
 
 
 if __name__ == "__main__":
