@@ -165,6 +165,29 @@ class I2cLcdAdapter:
         self._lcd.write_string(line2.ljust(16)[:16])
 
 
+class SafeStatus:
+    def __init__(self, wrapped: StatusOutput | None = None) -> None:
+        self._wrapped = wrapped
+
+    def write(self, line1: str, line2: str) -> None:
+        if self._wrapped is None:
+            print(f"LCD unavailable | {line1:<16} | {line2:<16}", flush=True)
+            return
+        try:
+            self._wrapped.write(line1, line2)
+        except OSError as exc:
+            print(f"LCD disabled after write failure: {exc}", flush=True)
+            self._wrapped = None
+
+
+def create_i2c_lcd_status(address: int = 0x27, columns: int = 16, rows: int = 2) -> StatusOutput:
+    try:
+        return SafeStatus(I2cLcdAdapter(address, columns, rows))
+    except (OSError, RuntimeError) as exc:
+        print(f"LCD unavailable, continuing without I2C LCD: {exc}", flush=True)
+        return SafeStatus()
+
+
 class ConsoleStatus:
     def write(self, line1: str, line2: str) -> None:
         print(f"LCD | {line1:<16} | {line2:<16}")
