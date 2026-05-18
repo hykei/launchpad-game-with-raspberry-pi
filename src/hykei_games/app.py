@@ -21,10 +21,10 @@ from .hardware import (
     ConsoleStatus,
     GridOutput,
     GridPress,
-    I2cLcdAdapter,
     InputEvent,
     LaunchpadMidiAdapter,
     MenuPress,
+    create_i2c_lcd_status,
     SenseHatAdapter,
     StatusOutput,
 )
@@ -256,7 +256,7 @@ def run_hardware(poll_seconds: float = 0.02) -> None:
     launchpad = LaunchpadMidiAdapter()
     controller = GameController(
         outputs=[launchpad, SenseHatAdapter()],
-        status=I2cLcdAdapter(),
+        status=create_i2c_lcd_status(),
     )
     controller.render()
     while True:
