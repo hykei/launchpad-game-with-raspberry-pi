@@ -1,0 +1,23 @@
+[Unit]
+Description=Hykei LaunchPad Raspberry Pi Games
+Documentation=https://github.com/hykei/launchpad-game-with-raspberry-pi
+Wants=sound.target
+After=multi-user.target sound.target
+StartLimitIntervalSec=120
+StartLimitBurst=10
+
+[Service]
+Type=simple
+User=hykei
+Group=hykei
+SupplementaryGroups=audio dialout i2c video input gpio spi
+WorkingDirectory=/home/hykei/script/Game
+Environment=PYTHONUNBUFFERED=1
+Environment=PYTHONPATH=/home/hykei/script/Game/src
+ExecStartPre=/bin/sleep 15
+ExecStart=/home/hykei/script/Game/.venv/bin/python -u -m hykei_games
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
